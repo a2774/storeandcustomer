@@ -139,7 +139,7 @@ const CustomersByStore = () => {
 
   // 🔹 Handler for Add Customer button
   const handleAddCustomer = () => {
-    router.push("/store/add-customer");
+    router.push("/store/addCustomer");
   };
 
   return (
