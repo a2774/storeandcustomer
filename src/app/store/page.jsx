@@ -48,8 +48,9 @@ const CustomerDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 5;
 
-  // Labeled/Static data for the status cards
-  const totalSales = "₹ 15,200";
+  // New state for dynamic sales data
+  const [totalSales, setTotalSales] = useState(0); 
+
   const totalCommission = "10%";
 
   const fetchCustomers = async (id) => {
@@ -82,10 +83,30 @@ const CustomerDashboard = () => {
     }
   };
 
+  // New function to fetch total sales for the store
+  const fetchTotalSales = async (id) => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/BalancebyStoreid?StoreID=${id}`
+      );
+      // Access the TotalBalance from the first item in the array
+      const sales = response.data?.[0]?.TotalBalance || 0;
+      setTotalSales(sales);
+    } catch (error) {
+      console.error("Failed to fetch total sales:", error);
+      toast.error("Failed to load total sales data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const storedid = localStorage.getItem("StoreID");
     if (storedid) {
       fetchCustomers(storedid);
+      fetchTotalSales(storedid); // Call the new fetch function
     } else {
       setLoading(false);
       toast.error("Store ID not found. Please log in.");
@@ -117,7 +138,10 @@ const CustomerDashboard = () => {
 
   const handleRefresh = () => {
     const storedid = localStorage.getItem("StoreID");
-    fetchCustomers(storedid);
+    if (storedid) {
+      fetchCustomers(storedid);
+      fetchTotalSales(storedid); // Include the new function in refresh
+    }
   };
 
   const handleAddCustomer = () => {
@@ -167,7 +191,9 @@ const CustomerDashboard = () => {
                 <FaMoneyBillWave size={28} className="text-green-500" />
                 <p className={labelClasses}>Total Sales</p>
               </div>
-              <h2 className={metricClasses}>{totalSales}</h2>
+              <h2 className={metricClasses}>
+                {totalSales.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+              </h2>
             </div>
 
             {/* Commission Card */}
