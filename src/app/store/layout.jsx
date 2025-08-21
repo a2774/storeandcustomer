@@ -64,7 +64,7 @@ export default function Layout({ children }) {
             </button>
             <div className="flex items-center gap-3">
               <img src="/LogoLight.jpeg" alt="Logo" className="h-8 w-8 rounded-full" />
-              <span className="font-semibold text-gray-800 hidden sm:inline">Admin Dashboard</span>
+              <span className="font-semibold text-gray-800 hidden sm:inline">Store Dashboard</span>
             </div>
             <div className="flex items-center gap-4">
               <button

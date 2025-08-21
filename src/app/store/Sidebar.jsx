@@ -62,11 +62,12 @@ const Sidebar = ({ onNavigate = () => {} }) => {
             className="h-10 w-10 rounded-full mx-auto mb-2"
           />
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-            Admin Panel
+            Store Panel
           </h2>
           {adminData && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Welcome, {adminData.username}
+              Welcome, {adminData.username} , 
+              Add Customers To Grow The Business.
             </p>
           )}
         </div>

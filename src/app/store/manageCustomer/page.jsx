@@ -1,5 +1,5 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -17,43 +17,37 @@ import "react-toastify/dist/ReactToastify.css";
 import ProtectedStoreRoute from "@/components/ProtectedStoreRoute";
 
 const CustomersByStore = () => {
-  const { id } = useParams();
   const router = useRouter();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Set initial loading to true
   const [customers, setCustomers] = useState([]);
   const [storeName, setStoreName] = useState("");
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 5;
 
-  // 🔹 New state to hold the actual storeId to be used for fetching
-  const [currentStoreId, setCurrentStoreId] = useState(id);
-
   // 🔹 Fetch customers for the store
-  const fetchCustomers = async (storeId) => {
-    if (!storeId) {
-      toast.error("Invalid Store ID.");
+  const fetchCustomers = async (id) => {
+    if (!id) {
+      toast.error("Invalid Store ID. Please log in again.");
+      setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      // FIX: The params object was a bit off, but it's okay. I've re-structured it.
-      // Make sure the API URL is correct and the endpoint expects 'id' as a query parameter.
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_STORE_URL}/GetCustomersByStoreId`,
-        { params: { StoreId: storeId } } // FIX: Changed 'id' to 'StoreId' to match your API naming convention from the last request
+        { params: { Id: id } } // ✅ use "Id" with uppercase
       );
 
       if (res.data && res.data.length > 0) {
         setCustomers(res.data);
-        // Assuming your API returns StoreName in the customer objects
-        setStoreName(res.data[0].StoreName); 
+        setStoreName(res.data[0].StoreName);
       } else {
         toast.info("No customers found for this store");
         setCustomers([]);
-        setStoreName("Store"); // Default to 'Store' if no data is found
+        setStoreName("Store");
       }
     } catch (err) {
       console.error("Error fetching customers", err);
@@ -63,27 +57,16 @@ const CustomersByStore = () => {
     }
   };
 
-  // 🔹 UseEffect to determine which StoreID to use (URL or localStorage)
   useEffect(() => {
-    let storeIdToFetch = id;
-    
-    // Fallback to localStorage if `id` is not present in URL params
-    if (!storeIdToFetch) {
-      const storedLogin = JSON.parse(localStorage.getItem("CurrentLogin"));
-      if (storedLogin && storedLogin.StoreID) {
-        storeIdToFetch = storedLogin.StoreID;
-        // Optionally, update the URL to reflect the new ID
-        // router.replace(`/CustomersByStore/${storeIdToFetch}`);
-      }
-    }
-
-    if (storeIdToFetch) {
-      setCurrentStoreId(storeIdToFetch);
-      fetchCustomers(storeIdToFetch);
+    const storedid = localStorage.getItem("StoreID"); // ✅ match login key
+    if (storedid) {
+      fetchCustomers(storedid);
     } else {
-      toast.error("Store ID not found. Please log in again.");
+      setLoading(false);
+      toast.error("Store ID not found. Please log in.");
+      // router.push("/store-login");
     }
-  }, [id]);
+  }, []);
 
   // 🔹 Filter customers by query
   const filtered = customers.filter((customer) => {
@@ -120,8 +103,8 @@ const CustomersByStore = () => {
 
   // 🔹 Action Handlers
   const handleView = (customerId) => {
-    toast.info(`View customer ${customerId}`);
-    // router.push(`/customers/view/${customerId}`);
+    // FIX: Navigate to the customer details page with the customerId in the URL
+    router.push(`/store/view/${customerId}`);
   };
 
   const handleEdit = (customerId) => {
@@ -136,7 +119,7 @@ const CustomersByStore = () => {
       setLoading(true);
       // Example delete request - adjust API endpoint
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/DeleteCustomer`,
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/DeleteCustomer`,
         { params: { id: customerId } }
       );
       toast.success("Customer deleted successfully");
@@ -148,13 +131,13 @@ const CustomersByStore = () => {
       setLoading(false);
     }
   };
-  
-  // 🔹 ADDED: Handler to refresh data
+
   const handleRefresh = () => {
-    fetchCustomers(currentStoreId);
+    const storedid = localStorage.getItem("StoreID"); // ✅
+    fetchCustomers(storedid);
   };
-  
-  // 🔹 ADDED: Handler for Add Customer button
+
+  // 🔹 Handler for Add Customer button
   const handleAddCustomer = () => {
     router.push("/store/add-customer");
   };
@@ -198,15 +181,15 @@ const CustomersByStore = () => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={handleRefresh} // UPDATED: Use the new handler
+                  onClick={handleRefresh}
                   disabled={loading}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
                 >
                   <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                   Refresh
                 </button>
-                <button 
-                  onClick={handleAddCustomer} // UPDATED: Use the new handler
+                <button
+                  onClick={handleAddCustomer}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <FaPlus />
@@ -267,14 +250,14 @@ const CustomersByStore = () => {
                                 >
                                   <FaEye /> View
                                 </button>
-                                <button
+                                {/* <button
                                   onClick={() =>
                                     handleEdit(customer.CustomerID)
                                   }
                                   className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md flex items-center gap-1"
                                 >
                                   <FaEdit /> Edit
-                                </button>
+                                </button> */}
                                 <button
                                   onClick={() =>
                                     handleDelete(customer.CustomerID)

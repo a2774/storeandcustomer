@@ -116,7 +116,7 @@ const StoreLoginForm = () => {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <img src="/LogoLight.jpeg" alt="Logo" className="h-10 w-10 rounded-full" />
-                <span className="ml-3 text-xl font-bold text-gray-800">Store Management System</span>
+                <span className="ml-3 text-xl font-bold text-gray-800">Store Panel</span>
               </div>
               <div className="text-sm font-bold text-gray-600">
                 Store Portal
