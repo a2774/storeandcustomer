@@ -15,11 +15,14 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedStoreRoute from "@/components/ProtectedStoreRoute";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const CustomersByStore = () => {
   const router = useRouter();
 
-  const [loading, setLoading] = useState(true); // Set initial loading to true
+  const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState([]);
   const [storeName, setStoreName] = useState("");
   const [query, setQuery] = useState("");
@@ -38,7 +41,7 @@ const CustomersByStore = () => {
       setLoading(true);
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_STORE_URL}/GetCustomersByStoreId`,
-        { params: { Id: id } } // ✅ use "Id" with uppercase
+        { params: { Id: id } }
       );
 
       if (res.data && res.data.length > 0) {
@@ -58,13 +61,12 @@ const CustomersByStore = () => {
   };
 
   useEffect(() => {
-    const storedid = localStorage.getItem("StoreID"); // ✅ match login key
+    const storedid = localStorage.getItem("StoreID");
     if (storedid) {
       fetchCustomers(storedid);
     } else {
       setLoading(false);
       toast.error("Store ID not found. Please log in.");
-      // router.push("/store-login");
     }
   }, []);
 
@@ -103,13 +105,7 @@ const CustomersByStore = () => {
 
   // 🔹 Action Handlers
   const handleView = (customerId) => {
-    // FIX: Navigate to the customer details page with the customerId in the URL
     router.push(`/store/view/${customerId}`);
-  };
-
-  const handleEdit = (customerId) => {
-    toast.info(`Edit customer ${customerId}`);
-    // router.push(`/customers/edit/${customerId}`);
   };
 
   const handleDelete = async (customerId) => {
@@ -117,7 +113,6 @@ const CustomersByStore = () => {
 
     try {
       setLoading(true);
-      // Example delete request - adjust API endpoint
       await axios.delete(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/DeleteCustomer`,
         { params: { id: customerId } }
@@ -133,13 +128,65 @@ const CustomersByStore = () => {
   };
 
   const handleRefresh = () => {
-    const storedid = localStorage.getItem("StoreID"); // ✅
+    const storedid = localStorage.getItem("StoreID");
     fetchCustomers(storedid);
   };
 
-  // 🔹 Handler for Add Customer button
   const handleAddCustomer = () => {
     router.push("/store/addCustomer");
+  };
+
+  // 🔹 Export to Excel function
+  const exportToExcel = () => {
+    const dataToExport = filtered.map((customer) => ({
+      "Customer ID": customer.CustomerID,
+      "Customer Name": customer.Customer_Name,
+      Email: customer.Customer_Email,
+      Phone: customer.Customer_phone,
+      "Service Name": customer.service_name,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
+    XLSX.writeFile(workbook, `customers_for_${storeName}_store.xlsx`);
+  };
+
+  // 🔹 Export to PDF function
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text(`Customers for ${storeName} Store`, 14, 20);
+
+    const tableColumn = ["ID", "Name", "Email", "Phone", "Service"];
+    const tableRows = filtered.map((customer) => [
+      customer.CustomerID,
+      customer.Customer_Name,
+      customer.Customer_Email,
+      customer.Customer_phone,
+      customer.service_name,
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25,
+      styles: {
+        cellPadding: 3,
+        fontSize: 10,
+        valign: "middle",
+        halign: "left",
+        textColor: [0, 0, 0],
+        lineColor: [180, 180, 180],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [52, 58, 64],
+        textColor: [255, 255, 255],
+        fontSize: 12,
+        fontStyle: "bold",
+      },
+    });
+
+    doc.save(`customers_for_${storeName}_store.pdf`);
   };
 
   return (
@@ -197,6 +244,21 @@ const CustomersByStore = () => {
                 </button>
               </div>
             </div>
+            {/* New Export Buttons */}
+            <div className="flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+              <button
+                onClick={exportToPDF}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Download PDF
+              </button>
+              <button
+                onClick={exportToExcel}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Export to Excel
+              </button>
+            </div>
           </div>
 
           {/* Table */}
@@ -250,14 +312,6 @@ const CustomersByStore = () => {
                                 >
                                   <FaEye /> View
                                 </button>
-                                {/* <button
-                                  onClick={() =>
-                                    handleEdit(customer.CustomerID)
-                                  }
-                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md flex items-center gap-1"
-                                >
-                                  <FaEdit /> Edit
-                                </button> */}
                                 <button
                                   onClick={() =>
                                     handleDelete(customer.CustomerID)
@@ -327,6 +381,5 @@ const CustomersByStore = () => {
       </div>
     </ProtectedStoreRoute>
   );
-};
-
+}
 export default CustomersByStore;
