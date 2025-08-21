@@ -1,11 +1,27 @@
 'use client';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
+import {
+  FaUser,
+  FaEnvelope,
+  FaPhone,
+  FaIdCard,
+  FaCreditCard,
+  FaMoneyBillWave,
+  FaCogs,
+  FaFileAlt,
+  FaUpload,
+  FaSpinner,
+  FaArrowLeft,
+  FaInfoCircle
+} from 'react-icons/fa';
 
-const NEXT_PUBLIC_UPLOAD_URL = 'http://122.160.25.202/micron/app/api/api/store/PostUserImage';
+const NEXT_PUBLIC_UPLOAD_URL = process.env.NEXT_PUBLIC_STORE_URL
+  ? `${process.env.NEXT_PUBLIC_STORE_URL}/PostUserImage`
+  : 'http://122.160.25.202/micron/app/api/api/store/PostUserImage';
 const BACKEND_BASE_URL =
   process.env.NEXT_PUBLIC_BACKEND_BASE_URL ||
   'http://122.160.25.202/micron/app/api/api/CustomerDetails';
@@ -31,19 +47,16 @@ export default function CustomerForm() {
     customer_pancard: '',
   });
 
-  const [previews, setPreviews] = useState({
-    customer_aadhar: null,
-    customer_pancard: null,
-  });
+  // I've removed the local previews state since it's not being used in the final design.
+  // The 'uploaded' check on file names is sufficient.
 
-  // ✅ Field-wise validation
   const validateField = (name, value) => {
-    if (!value || value.trim() === '') {
+    if (!value || String(value).trim() === '') {
       return 'This field is required.';
     }
     switch (name) {
       case 'customer_name':
-        if (!/^[A-Za-z ]{3,50}$/.test(value)) return 'Name must be 3-50 letters only.';
+        if (!/^[A-Za-z\s]{3,50}$/.test(value)) return 'Name must be 3-50 letters and spaces.';
         break;
       case 'customer_email':
         if (!/^[\w-.]+@([\w-]+\.)+[A-Za-z]{2,}$/.test(value)) return 'Enter a valid email address.';
@@ -58,8 +71,8 @@ export default function CustomerForm() {
         if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value)) return 'Enter valid PAN (e.g., ABCDE1234F).';
         break;
       case 'Customer_ProductAmount':
-        if (!/^\d{1,7}(\.\d{1,2})?$/.test(value))
-          return 'Amount must be valid (max 7 digits, 2 decimals).';
+        if (value <= 0 || !/^\d{1,7}(\.\d{1,2})?$/.test(value))
+          return 'Amount must be valid (max 7 digits, 2 decimals) and greater than zero.';
         break;
       case 'Productservices_Id':
         if (!value) return 'Please select a service.';
@@ -74,51 +87,51 @@ export default function CustomerForm() {
     const { name, value } = e.target;
     let newValue = value;
 
-    // ✅ Apply hard input limits
-     if (name === "customer_name") {
-    newValue = newValue.slice(0, 50); // max 50 characters
-  }
-  if (name === "customer_email") {
-    newValue = newValue.slice(0, 30); // max 100 characters
-  }
-  if (name === "customer_phone") {
-    newValue = newValue.replace(/\D/g, "").slice(0, 10); // only 10 digits
-  }
-  if (name === "Customer_AadharNumber") {
-    newValue = newValue.replace(/\D/g, "").slice(0, 12); // 12 digits only
-  }
-  if (name === "Customer_PanNumber") {
-    newValue = newValue.toUpperCase().slice(0, 10); // PAN = 10 chars only
-  }
+    if (name === "customer_name") {
+      newValue = newValue.slice(0, 50);
+    }
+    if (name === "customer_email") {
+      newValue = newValue.slice(0, 30);
+    }
+    if (name === "customer_phone") {
+      newValue = newValue.replace(/\D/g, "").slice(0, 10);
+    }
+    if (name === "Customer_AadharNumber") {
+      newValue = newValue.replace(/\D/g, "").slice(0, 12);
+    }
+    if (name === "Customer_PanNumber") {
+      newValue = newValue.toUpperCase().slice(0, 10);
+    }
 
     setFormData((prev) => ({ ...prev, [name]: newValue }));
     const errorMsg = validateField(name, newValue);
     setErrors((prev) => ({ ...prev, [name]: errorMsg }));
   };
 
-  // ✅ File Upload Handler
   const handleFileUploadChange = async (e, type) => {
     const file = e.target.files[0];
-    if (!file) return;
+    const fieldName = type === 'Pan' ? 'customer_pancard' : 'customer_aadhar';
+    if (!file) {
+      setErrors((prev) => ({ ...prev, [fieldName]: 'File is required.' }));
+      return;
+    }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
       toast.error('Invalid file type. Only JPG, PNG, GIF allowed.');
+      setErrors((prev) => ({ ...prev, [fieldName]: 'Invalid file type.' }));
+      e.target.value = ''; // Clear file input
       return;
     }
     if (file.size > 1 * 1024 * 1024) {
       toast.error('File too large. Max size 1MB.');
+      setErrors((prev) => ({ ...prev, [fieldName]: 'File too large.' }));
+      e.target.value = '';
       return;
     }
 
     const setFile = type === 'Pan' ? setPanFile : setAadharFile;
     const setUploading = type === 'Pan' ? setUploadingPan : setUploadingAadhar;
-    const fieldName = type === 'Pan' ? 'customer_pancard' : 'customer_aadhar';
-
-    setPreviews((prev) => ({
-      ...prev,
-      [fieldName]: URL.createObjectURL(file),
-    }));
 
     setUploading(true);
     const formPayload = new FormData();
@@ -166,7 +179,6 @@ export default function CustomerForm() {
     fetchProductServices();
   }, []);
 
-  // ✅ Full form validation (on submit)
   const validateForm = () => {
     const newErrors = {};
     Object.keys(formData).forEach((field) => {
@@ -174,8 +186,8 @@ export default function CustomerForm() {
       if (errorMsg) newErrors[field] = errorMsg;
     });
 
-    if (!panFile) newErrors.customer_pancard = 'PAN image required';
-    if (!aadharFile) newErrors.customer_aadhar = 'Aadhar image required';
+    if (!panFile) newErrors.customer_pancard = 'PAN card image is required';
+    if (!aadharFile) newErrors.customer_aadhar = 'Aadhar card image is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -186,6 +198,12 @@ export default function CustomerForm() {
 
     if (!validateForm()) {
       toast.error('Please fix validation errors before submitting.');
+      return;
+    }
+    
+    // Add a check to prevent submission while uploading
+    if (uploadingPan || uploadingAadhar) {
+      toast.warn('Please wait for files to finish uploading.');
       return;
     }
 
@@ -225,105 +243,201 @@ export default function CustomerForm() {
   };
 
   const isUploading = uploadingPan || uploadingAadhar;
+  const isFormInvalid = Object.values(errors).some(error => error);
 
   return (
-    <>
-      <h1 className="max-w-5xl mx-auto w-full h-24 bg-blue-600 text-white font-extrabold text-4xl flex items-center justify-center rounded-xl mt-12 mb-6">
-        Fill All Details
-      </h1>
-
-      <form
-        className="max-w-5xl mx-auto p-10 bg-white rounded-xl shadow-xl border border-gray-200"
-        onSubmit={handleSubmit}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-2">
+      <button
+        onClick={() => navigate.back()}
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors"
       >
-        {/* Service Dropdown */}
-        <div className="flex flex-col mb-6">
-          <label htmlFor="services" className="text-sm font-medium text-gray-700 mb-2">
-            Services
-          </label>
-          <select
-            id="services"
-            name="Productservices_Id"
-            value={formData.Productservices_Id}
-            onChange={handleChange}
-            className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Select a Service --</option>
-            {product.map((service) => (
-              <option key={service.Productservices_Id} value={service.Productservices_Id}>
-                {service.service_name}
-              </option>
-            ))}
-          </select>
-          {errors.Productservices_Id && (
-            <p className="text-red-500 text-sm mt-1">{errors.Productservices_Id}</p>
-          )}
+        <FaArrowLeft />
+        Back
+      </button>
+
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Add New Customer
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Enter the customer's details and required documents.
+          </p>
         </div>
 
-        {/* Input Fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-          {[
-            { label: 'Customer Name', name: 'customer_name', type: 'text', placeholder: 'Enter Customer Name', maxLength: 50 },
-            { label: 'Customer Email', name: 'customer_email', type: 'email', placeholder: 'Enter Customer Email', maxLength: 30 },
-            { label: 'Customer Phone', name: 'customer_phone', type: 'tel', placeholder: 'Enter Customer Phone', maxLength: 10 },
-            { label: 'Customer Aadhar Number', name: 'Customer_AadharNumber', type: 'text', placeholder: 'Enter Aadhar Number', maxLength: 12 },
-            { label: 'Customer PAN Number', name: 'Customer_PanNumber', type: 'text', placeholder: 'Enter PAN Number', maxLength: 10 },
-            { label: 'Customer Product Amount', name: 'Customer_ProductAmount', type: 'number', placeholder: 'Enter Amount', min: 0, step: 'any', maxLength: 9 },
-          ].map(({ label, name, type, placeholder, min, step, maxLength }) => (
-            <div key={name}>
-              <label className="mb-3 text-base font-semibold text-slate-900 block">{label}</label>
-              <input
-                type={type}
-                name={name}
-                value={formData[name]}
-                onChange={handleChange}
-                placeholder={placeholder}
-                className="w-full px-5 py-4 bg-[#f0f1f2] focus:bg-white text-black text-base border border-gray-300 rounded-lg shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min={min}
-                step={step}
-                maxLength={maxLength}
-              />
-              {errors[name] && <p className="text-red-500 text-sm mt-1">{errors[name]}</p>}
-            </div>
-          ))}
+        {/* Form Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mx-auto">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+            <h2 className="text-xl font-semibold text-white flex items-center">
+              <FaUser className="mr-3" />
+              Customer Information
+            </h2>
+          </div>
 
-          {/* File Uploads */}
-          {[
-            { label: 'Upload Aadhar', type: 'Aadhar', name: 'customer_aadhar', preview: previews.customer_aadhar, error: errors.customer_aadhar, uploading: uploadingAadhar },
-            { label: 'Upload PAN Card', type: 'Pan', name: 'customer_pancard', preview: previews.customer_pancard, error: errors.customer_pancard, uploading: uploadingPan },
-          ].map(({ label, type, name, preview, error, uploading }) => (
-            <div key={name} className="flex flex-col items-start">
-              <label className="mb-2 text-base font-semibold text-slate-900">{label}</label>
-              <input
-                type="file"
-                name={name}
-                accept="image/*"
-                onChange={(e) => handleFileUploadChange(e, type)}
-                className="w-full border border-gray-300 rounded-md px-4 py-3 cursor-pointer hover:border-blue-500 transition"
-              />
-              {uploading && <p className="text-blue-500 mt-1">Uploading...</p>}
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-              {preview && (
-                <img
-                  src={preview}
-                  alt={`${name} preview`}
-                  className="mt-2 w-48 h-32 object-contain border rounded-md shadow-sm"
-                />
-              )}
-            </div>
-          ))}
+          <div className="p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Service Dropdown */}
+              <div>
+                <label
+                  htmlFor="services"
+                  className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                >
+                  <FaCogs className="mr-2 text-indigo-500" />
+                  Service *
+                </label>
+                <select
+                  id="services"
+                  name="Productservices_Id"
+                  value={formData.Productservices_Id}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                    errors.Productservices_Id ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Select a Service</option>
+                  {product.map((service) => (
+                    <option key={service.Productservices_Id} value={service.Productservices_Id}>
+                      {service.service_name}
+                    </option>
+                  ))}
+                </select>
+                {errors.Productservices_Id && (
+                  <div className="text-red-500 text-sm mt-1 flex items-center">
+                    <FaInfoCircle className="mr-1" />
+                    {errors.Productservices_Id}
+                  </div>
+                )}
+              </div>
+
+              {/* Input Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  { label: 'Customer Name', name: 'customer_name', type: 'text', icon: FaUser, placeholder: 'Enter Customer Name' },
+                  { label: 'Email Address', name: 'customer_email', type: 'email', icon: FaEnvelope, placeholder: 'Enter Email Address' },
+                  { label: 'Phone Number', name: 'customer_phone', type: 'tel', icon: FaPhone, placeholder: 'Enter Phone Number' },
+                  { label: 'Product Amount', name: 'Customer_ProductAmount', type: 'number', icon: FaMoneyBillWave, placeholder: 'Enter Amount' },
+                  { label: 'Aadhar Number', name: 'Customer_AadharNumber', type: 'text', icon: FaCreditCard, placeholder: '1234 5678 9012' },
+                  { label: 'PAN Number', name: 'Customer_PanNumber', type: 'text', icon: FaIdCard, placeholder: 'ABCDE1234F' },
+                ].map(({ label, name, type, icon: Icon, placeholder }) => (
+                  <div key={name}>
+                    <label
+                      htmlFor={name}
+                      className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                    >
+                      <Icon className="mr-2 text-indigo-500" />
+                      {label} *
+                    </label>
+                    <input
+                      type={type}
+                      name={name}
+                      id={name}
+                      value={formData[name]}
+                      onChange={handleChange}
+                      onBlur={() => setErrors((prev) => ({ ...prev, [name]: validateField(name, formData[name]) }))}
+                      placeholder={placeholder}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                        errors[name] ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors[name] && (
+                      <div className="text-red-500 text-sm mt-1 flex items-center">
+                        <FaInfoCircle className="mr-1" />
+                        {errors[name]}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* File Uploads */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  { label: 'Aadhar Card Image', type: 'Aadhar', name: 'customer_aadhar', fileName: aadharFile, uploading: uploadingAadhar },
+                  { label: 'PAN Card Image', type: 'Pan', name: 'customer_pancard', fileName: panFile, uploading: uploadingPan },
+                ].map(({ label, type, name, fileName, uploading }) => (
+                  <div key={name}>
+                    <label
+                      htmlFor={name}
+                      className="block text-sm font-semibold text-gray-700 mb-2 flex items-center"
+                    >
+                      <FaFileAlt className="mr-2 text-indigo-500" />
+                      {label} *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUploadChange(e, type)}
+                        className="hidden"
+                        id={name}
+                      />
+                      <label
+                        htmlFor={name}
+                        className={`w-full px-4 py-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-center ${
+                          errors[name]
+                            ? 'border-red-300 bg-red-50'
+                            : 'border-gray-300 hover:border-indigo-500 hover:bg-indigo-50'
+                        }`}
+                      >
+                        {uploading ? (
+                          <FaSpinner className="animate-spin mr-2 text-indigo-500" />
+                        ) : (
+                          <FaUpload className="mr-2 text-indigo-500" />
+                        )}
+                        {fileName ? `${label} Uploaded ✓` : `Upload ${label}`}
+                      </label>
+                    </div>
+                    {errors[name] && (
+                      <div className="text-red-500 text-sm mt-1 flex items-center">
+                        <FaInfoCircle className="mr-1" />
+                        {errors[name]}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-6">
+                <button
+                  type="submit"
+                  disabled={isUploading || isFormInvalid}
+                  className={`w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white transition-all duration-200 ${
+                    isUploading || isFormInvalid
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform hover:scale-[1.02] active:scale-[0.98]"
+                  }`}
+                >
+                  {isUploading ? (
+                    <>
+                      <FaSpinner className="animate-spin mr-3" />
+                      Uploading Files...
+                    </>
+                  ) : (
+                    <>
+                      <FaUser className="mr-3" />
+                      Add Customer
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <button
-          type="submit"
-          disabled={isUploading}
-          className={`mt-12 px-8 py-3 text-lg font-semibold w-full max-w-[160px] mx-auto block bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition ${
-            isUploading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-        >
-          {isUploading ? 'Uploading files...' : 'Submit'}
-        </button>
-      </form>
-    </>
+      </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </div>
   );
 }

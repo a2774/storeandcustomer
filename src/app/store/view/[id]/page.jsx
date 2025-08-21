@@ -93,7 +93,12 @@ const CustomerDetailsPage = () => {
           <h3 className="font-semibold text-gray-800">{title}</h3>
         </div>
         <div className="p-4 flex justify-center">
-          <a href={src} target="_blank" rel="noopener noreferrer" className="block max-h-80 overflow-hidden rounded-lg border border-gray-300 hover:shadow-xl transition-shadow">
+          <a
+            href={src}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block max-h-80 overflow-hidden rounded-lg border border-gray-300 hover:shadow-xl transition-shadow"
+          >
             <Image
               src={src}
               alt={title}
@@ -137,7 +142,9 @@ const CustomerDetailsPage = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
         <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-          <p className="text-xl text-gray-700 mb-4">Customer details are not available.</p>
+          <p className="text-xl text-gray-700 mb-4">
+            Customer details are not available.
+          </p>
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -164,11 +171,13 @@ const CustomerDetailsPage = () => {
             <FaArrowLeft />
             <span className="text-lg">Back</span>
           </button>
+        </div>
+        <div className="mb-5">
+          {" "}
           <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             Customer Details
           </h1>
         </div>
-
         {/* Customer Details Card */}
         <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-6">
@@ -186,15 +195,51 @@ const CustomerDetailsPage = () => {
               <h2 className="text-2xl font-semibold text-indigo-600 mb-4 flex items-center">
                 <FaUser className="mr-2" /> Personal Information
               </h2>
-              <DetailItem label="ID" value={customer.CustomerID} icon={<FaIdCard />} />
-              <DetailItem label="Name" value={customer.Customer_Name} icon={<FaUser />} />
-              <DetailItem label="Email" value={customer.Customer_Email} icon={<FaEnvelope />} />
-              <DetailItem label="Phone" value={customer.Customer_Phone} icon={<FaPhone />} />
-              <DetailItem label="Aadhar No." value={customer.Customer_AadharNumber} icon={<FaCreditCard />} />
-              <DetailItem label="PAN No." value={customer.Customer_PanNumber} icon={<FaIdCard />} />
-              <DetailItem label="Service" value={customer.service_name} icon={<FaFileAlt />} />
-              <DetailItem label="Product Amount" value={`$${customer.Customer_ProductAmount}`} icon={<FaDollarSign />} />
-              <DetailItem label="Date Joined" value={new Date(customer.Customer_Date).toLocaleDateString()} icon={<FaCalendarAlt />} />
+              <DetailItem
+                label="ID"
+                value={customer.CustomerID}
+                icon={<FaIdCard />}
+              />
+              <DetailItem
+                label="Name"
+                value={customer.Customer_Name}
+                icon={<FaUser />}
+              />
+              <DetailItem
+                label="Email"
+                value={customer.Customer_Email}
+                icon={<FaEnvelope />}
+              />
+              <DetailItem
+                label="Phone"
+                value={customer.Customer_Phone}
+                icon={<FaPhone />}
+              />
+              <DetailItem
+                label="Aadhar No."
+                value={customer.Customer_AadharNumber}
+                icon={<FaCreditCard />}
+              />
+              <DetailItem
+                label="PAN No."
+                value={customer.Customer_PanNumber}
+                icon={<FaIdCard />}
+              />
+              <DetailItem
+                label="Service"
+                value={customer.service_name}
+                icon={<FaFileAlt />}
+              />
+              <DetailItem
+                label="Product Amount"
+                value={`$${customer.Customer_ProductAmount}`}
+                icon={<FaDollarSign />}
+              />
+              <DetailItem
+                label="Date Joined"
+                value={new Date(customer.Customer_Date).toLocaleDateString()}
+                icon={<FaCalendarAlt />}
+              />
             </div>
 
             <div className="space-y-4">
@@ -203,19 +248,15 @@ const CustomerDetailsPage = () => {
               </h2>
               {/* Image Preview Sections */}
               {aadharImageUrl && (
-                <DocumentCard
-                  title="Aadhar Card"
-                  src={aadharImageUrl}
-                />
+                <DocumentCard title="Aadhar Card" src={aadharImageUrl} />
               )}
               {panImageUrl && (
-                <DocumentCard
-                  title="PAN Card"
-                  src={panImageUrl}
-                />
+                <DocumentCard title="PAN Card" src={panImageUrl} />
               )}
               {!aadharImageUrl && !panImageUrl && (
-                <p className="text-gray-500 p-3 bg-gray-50 rounded-lg">No documents uploaded.</p>
+                <p className="text-gray-500 p-3 bg-gray-50 rounded-lg">
+                  No documents uploaded.
+                </p>
               )}
             </div>
           </div>
