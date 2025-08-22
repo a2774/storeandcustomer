@@ -52,7 +52,7 @@ const Sidebar = ({ onNavigate = () => {} }) => {
   };
 
   return (
-    <div className="h-full w-64 bg-gray-50 dark:bg-gray-800">
+    <div className="h-full w-64 bg-gray-50 bg-gray-800">
       <div className="h-full px-3 py-4 overflow-y-auto">
         {/* Title at the top of the sidebar */}
         <div className="text-center py-4">
@@ -61,11 +61,11 @@ const Sidebar = ({ onNavigate = () => {} }) => {
             alt="Logo"
             className="h-10 w-10 rounded-full mx-auto mb-2"
           />
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+          <h2 className="text-xl font-semibold text-gray-800 text-white">
             Store Panel
           </h2>
           {adminData && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-600 text-gray-400 mt-1">
               Welcome, {adminData.username} , 
               Add Customers To Grow The Business.
             </p>
@@ -77,9 +77,9 @@ const Sidebar = ({ onNavigate = () => {} }) => {
             <Link
               href="/store"
               onClick={onNavigate}
-              className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              className="flex items-center p-2 text-gray-900 rounded-lg text-white hover:bg-gray-100 hover:bg-gray-700 group"
             >
-              <FaTachometerAlt className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <FaTachometerAlt className="w-5 h-5 text-gray-500 transition duration-75 text-gray-400 group-hover:text-gray-900 group-hover:text-white" />
               <span className="ms-3">Dashboard</span>
             </Link>
           </li>
@@ -87,9 +87,9 @@ const Sidebar = ({ onNavigate = () => {} }) => {
             <Link
               href="/store/addCustomer"
               onClick={onNavigate}
-              className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              className="flex items-center p-2 text-gray-900 rounded-lg text-white hover:bg-gray-100 hover:bg-gray-700 group"
             >
-              <FaShoppingCart className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <FaShoppingCart className="w-5 h-5 text-gray-500 transition duration-75 text-gray-400 group-hover:text-gray-900 group-hover:text-white" />
               <span className="flex-1 ms-3 whitespace-nowrap">
                 Add Customer
               </span>
@@ -99,9 +99,9 @@ const Sidebar = ({ onNavigate = () => {} }) => {
             <Link
               href="/store/manageCustomer"
               onClick={onNavigate}
-              className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              className="flex items-center p-2 text-gray-900 rounded-lg text-white hover:bg-gray-100 hover:bg-gray-700 group"
             >
-              <FaUserCircle className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <FaUserCircle className="w-5 h-5 text-gray-500 transition duration-75 text-gray-400 group-hover:text-gray-900 group-hover:text-white" />
               <span className="flex-1 ms-3 whitespace-nowrap">
                 Manage Customer
               </span>
@@ -111,9 +111,9 @@ const Sidebar = ({ onNavigate = () => {} }) => {
           <li>
             <button
               onClick={handleLogout}
-              className="flex items-center p-2 w-full text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+              className="flex items-center p-2 w-full text-gray-900 rounded-lg text-white hover:bg-gray-100 hover:bg-gray-700 group"
             >
-              <FaSignOutAlt className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <FaSignOutAlt className="w-5 h-5 text-gray-500 transition duration-75 text-gray-400 group-hover:text-gray-900 group-hover:text-white" />
               <span className="flex-1 ms-3 text-left whitespace-nowrap">
                 Logout
               </span>

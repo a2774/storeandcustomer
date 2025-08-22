@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import axios from "axios";
-import Image from "next/image"; // ✅ Import the Image component
+import Image from "next/image"; 
 import {
   FaArrowLeft,
   FaSpinner,
@@ -20,13 +20,13 @@ import "react-toastify/dist/ReactToastify.css";
 
 const CustomerDetailsPage = () => {
   const router = useRouter();
-  const { id } = useParams(); // ✅ Use useParams to get the ID from the URL
+  const { id } = useParams(); 
 
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🔹 Function to fetch customer details by ID
+  
   const fetchCustomer = async (customerId) => {
     if (!customerId) {
       setLoading(false);
@@ -42,6 +42,8 @@ const CustomerDetailsPage = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/GetById`,
         { params: { id: customerId } }
       );
+      const data = response.data[0]
+      console.log("responce", data)
 
       if (response.data && response.data.length > 0) {
         setCustomer(response.data[0]);
@@ -248,10 +250,10 @@ const CustomerDetailsPage = () => {
               </h2>
               {/* Image Preview Sections */}
               {aadharImageUrl && (
-                <DocumentCard title="Aadhar Card" src={aadharImageUrl} />
+                <DocumentCard title="Aadhar Card"  src={`http://122.160.25.202/micron/app/uploads/${customer.Customer_Aadhar}`} />
               )}
               {panImageUrl && (
-                <DocumentCard title="PAN Card" src={panImageUrl} />
+                <DocumentCard title="PAN Card" src={`http://122.160.25.202/micron/app/uploads/${customer.Customer_PanCard}`} />
               )}
               {!aadharImageUrl && !panImageUrl && (
                 <p className="text-gray-500 p-3 bg-gray-50 rounded-lg">
