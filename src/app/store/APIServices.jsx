@@ -1,5 +1,9 @@
 // src/services/APIServices.js
-export const baseurl = 'http://122.160.25.202/micron/app/api/api/Customer';
+
+
+
+
+export const baseurl = `${process.env.NEXT_PUBLIC_LOGIN_URL}`;
 
 export async function customerLogin(customerdata) {
   try {
