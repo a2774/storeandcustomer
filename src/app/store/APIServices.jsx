@@ -13,17 +13,17 @@ export async function customerLogin(customerdata) {
 
     if (!res.ok) {
       if (res.status === 401) {
-        throw new Error('Invalid Store ID or Password');
+        return { status: 0, message: 'Invalid Store ID or Password' };
       } else if (res.status === 500) {
-        throw new Error('Server error. Please try again later.');
+        return { status: 0, message: 'Server error. Please try again later.' };
       } else {
-        throw new Error('Something went wrong! Please try again.');
+        return { status: 0, message: 'Something went wrong! Please try again.' };
       }
     }
 
     return await res.json();
-  } catch (error) {
-    console.error('Login failed:', error.message);
-    throw error;
+  } catch {
+    // ❌ console.error hata diya
+    // return { status: 0, message: 'Network error. Please try again later.' };
   }
 }

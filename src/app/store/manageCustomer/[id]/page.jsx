@@ -124,30 +124,30 @@ const CustomersByStore = () => {
     // router.push(`/customers/view/${customerId}`);
   };
 
-  const handleEdit = (customerId) => {
-    toast.info(`Edit customer ${customerId}`);
-    // router.push(`/customers/edit/${customerId}`);
-  };
+  // const handleEdit = (customerId) => {
+  //   toast.info(`Edit customer ${customerId}`);
+  //   // router.push(`/customers/edit/${customerId}`);
+  // };
 
-  const handleDelete = async (customerId) => {
-    if (!confirm("Are you sure you want to delete this customer?")) return;
+  // const handleDelete = async (customerId) => {
+  //   if (!confirm("Are you sure you want to delete this customer?")) return;
 
-    try {
-      setLoading(true);
-      // Example delete request - adjust API endpoint
-      await axios.delete(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/DeleteCustomer`,
-        { params: { id: customerId } }
-      );
-      toast.success("Customer deleted successfully");
-      setCustomers(customers.filter((c) => c.CustomerID !== customerId));
-    } catch (err) {
-      console.error("Delete error", err);
-      toast.error("Failed to delete customer");
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   try {
+  //     setLoading(true);
+  //     // Example delete request - adjust API endpoint
+  //     await axios.delete(
+  //       `${process.env.NEXT_PUBLIC_STORE_URL}/DeleteCustomer`,
+  //       { params: { id: customerId } }
+  //     );
+  //     toast.success("Customer deleted successfully");
+  //     setCustomers(customers.filter((c) => c.CustomerID !== customerId));
+  //   } catch (err) {
+  //     console.error("Delete error", err);
+  //     toast.error("Failed to delete customer");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   
   // 🔹 ADDED: Handler to refresh data
   const handleRefresh = () => {
@@ -267,22 +267,22 @@ const CustomersByStore = () => {
                                 >
                                   <FaEye /> View
                                 </button>
-                                <button
+                                {/* <button
                                   onClick={() =>
                                     handleEdit(customer.CustomerID)
                                   }
                                   className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md flex items-center gap-1"
                                 >
                                   <FaEdit /> Edit
-                                </button>
-                                <button
+                                </button> */}
+                                {/* <button
                                   onClick={() =>
                                     handleDelete(customer.CustomerID)
                                   }
                                   className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md flex items-center gap-1"
                                 >
                                   <FaTrash /> Delete
-                                </button>
+                                </button> */}
                               </td>
                             </tr>
                           ))
