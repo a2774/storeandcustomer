@@ -250,10 +250,10 @@ const CustomerDetailsPage = () => {
               </h2>
               {/* Image Preview Sections */}
               {aadharImageUrl && (
-                <DocumentCard title="Aadhar Card"  src={`https://demo.sysfo.info/micron/app/uploads/${customer.Customer_Aadhar}`} />
+                <DocumentCard title="Aadhar Card"  src={`${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${customer.Customer_Aadhar}`} />
               )}
               {panImageUrl && (
-                <DocumentCard title="PAN Card" src={`https://demo.sysfo.info/micron/app/uploads/${customer.Customer_PanCard}`} />
+                <DocumentCard title="PAN Card" src={`${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${customer.Customer_PanCard}`} />
               )}
               {!aadharImageUrl && !panImageUrl && (
                 <p className="text-gray-500 p-3 bg-gray-50 rounded-lg">
