@@ -321,6 +321,8 @@ const CustomersByStore = () => {
       </div>
     </ProtectedStoreRoute>
   );
-};
+}; 
 
 export default CustomersByStore;
+
+//make
