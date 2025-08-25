@@ -43,7 +43,7 @@ const CustomerDetailsPage = () => {
         { params: { id: customerId } }
       );
       const data = response.data[0]
-      console.log("responce", data)
+    
 
       if (response.data && response.data.length > 0) {
         setCustomer(response.data[0]);
@@ -244,11 +244,11 @@ const CustomerDetailsPage = () => {
               />
             </div>
 
-            <div className="space-y-4">
+<div className="space-y-4">
               <h2 className="text-2xl font-semibold text-indigo-600 mb-4 flex items-center">
                 <FaFileAlt className="mr-2" /> Documents
               </h2>
-              {/* Image Preview Sections */}
+              Image Preview Sections
               {aadharImageUrl && (
                 <DocumentCard title="Aadhar Card"  src={`${process.env.NEXT_PUBLIC_IMAGE_PREVIEW}/${customer.Customer_Aadhar}`} />
               )}
@@ -261,6 +261,26 @@ const CustomerDetailsPage = () => {
                 </p>
               )}
             </div>
+
+            <div className="space-y-4">
+              {/* <h2 className="text-2xl font-semibold text-indigo-600 mb-4 flex items-center">
+                <FaFileAlt className="mr-2" /> Documents
+              </h2> */}
+              {/* Image Preview Sections
+              {aadharImageUrl && (
+                <DocumentCard title="Aadhar Card"  src={`${process.env.NEXT_PUBLIC_PREVIEW}/${customer.Customer_Aadhar}`} />
+              )}
+              {panImageUrl && (
+                <DocumentCard title="PAN Card" src={`${process.env.NEXT_PUBLIC_PREVIEW}/${customer.Customer_PanCard}`} />
+              )}
+              {!aadharImageUrl && !panImageUrl && (
+                <p className="text-gray-500 p-3 bg-gray-50 rounded-lg">
+                  No documents uploaded.
+                </p>
+              )} */}
+            </div>
+
+            
           </div>
         </div>
       </div>

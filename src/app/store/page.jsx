@@ -25,8 +25,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import Link from "next/link";
 
-// Mock data for the chart. You should replace this with a real API call.
 const customerGrowthData = [
   { name: "Jan", "New Customers": 12 },
   { name: "Feb", "New Customers": 19 },
@@ -259,13 +259,14 @@ const CustomerDashboard = () => {
                   <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                   Refresh
                 </button>
-                <button
+                 <Link
+              href="/store/addCustomer"
                   onClick={handleAddCustomer}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <FaPlus />
                   Add Customer
-                </button>
+                </Link>
               </div>
             </div>
 
