@@ -1,85 +1,68 @@
-"use client";
-import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import {
-  FaUsers,
-  FaSearch,
-  FaPlus,
-  FaSpinner,
-  FaArrowLeft,
-  FaChartBar,
-  FaMoneyBillWave,
-  FaPercentage,
-  FaFilePdf,
-  FaFileExcel,
-} from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import ProtectedStoreRoute from "@/components/ProtectedStoreRoute";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
-import Link from "next/link";
+'use client';
+import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { FaUsers, FaSearch, FaPlus, FaSpinner, FaArrowLeft, FaChartBar, FaMoneyBillWave, FaPercentage, FaFilePdf, FaFileExcel } from 'react-icons/fa';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import ProtectedStoreRoute from '@/components/ProtectedStoreRoute';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import Link from 'next/link';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const customerGrowthData = [
-  { name: "Jan", "New Customers": 12 },
-  { name: "Feb", "New Customers": 19 },
-  { name: "Mar", "New Customers": 10 },
-  { name: "Apr", "New Customers": 13 },
-  { name: "May", "New Customers": 15 },
-  { name: "Jun", "New Customers": 22 },
-  { name: "Jul", "New Customers": 18 },
-  { name: "Aug", "New Customers": 25 },
+  { name: 'Jan', 'New Customers': 12 },
+  { name: 'Feb', 'New Customers': 19 },
+  { name: 'Mar', 'New Customers': 10 },
+  { name: 'Apr', 'New Customers': 13 },
+  { name: 'May', 'New Customers': 15 },
+  { name: 'Jun', 'New Customers': 22 },
+  { name: 'Jul', 'New Customers': 18 },
+  { name: 'Aug', 'New Customers': 25 },
 ];
 
 const CustomerDashboard = () => {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState([]);
-  const [storeName, setStoreName] = useState("");
-  const [query, setQuery] = useState("");
+  const [storeName, setStoreName] = useState('');
+  const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 5;
-  const [totalSales, setTotalSales] = useState(0);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
 
-  const totalCommission = "10%";
+  // new states for filter
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // New state for dynamic sales data
+  const [totalSales, setTotalSales] = useState(0);
+  const totalCommission = '10%';
 
   const fetchCustomers = async (id) => {
     if (!id) {
-      toast.error("Invalid Store ID. Please log in again.");
+      toast.error('Invalid Store ID. Please log in again.');
       setLoading(false);
       return;
     }
+
     try {
       setLoading(true);
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_STORE_URL}/GetCustomersByStoreId`,
-        { params: { Id: id } }
-      );
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_STORE_URL}/GetCustomersByStoreId`, { params: { Id: id } });
+
       if (res.data && res.data.length > 0) {
         setCustomers(res.data);
         setStoreName(res.data[0].StoreName);
       } else {
-        toast.info("No customers found for this store");
+        toast.info('No customers found for this store');
         setCustomers([]);
-        setStoreName("Store");
+        setStoreName('Store');
       }
     } catch (err) {
-      console.error("Error fetching customers", err);
-      toast.error("Failed to fetch customers");
+      console.error('Error fetching customers', err);
+      toast.error('Failed to fetch customers');
     } finally {
       setLoading(false);
     }
@@ -89,43 +72,50 @@ const CustomerDashboard = () => {
     if (!id) return;
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/BalancebyStoreid?StoreID=${id}`
-      );
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/BalancebyStoreid?StoreID=${id}`);
       const sales = response.data?.[0]?.TotalBalance || 0;
       setTotalSales(sales);
     } catch (error) {
-      console.error("Failed to fetch total sales:", error);
-      toast.error("Failed to load total sales data.");
+      console.error('Failed to fetch total sales:', error);
+      toast.error('Failed to load total sales data.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const storedid = localStorage.getItem("StoreID");
+    const storedid = localStorage.getItem('StoreID');
     if (storedid) {
       fetchCustomers(storedid);
       fetchTotalSales(storedid);
     } else {
       setLoading(false);
-      toast.error("Store ID not found. Please log in.");
+      toast.error('Store ID not found. Please log in.');
     }
   }, []);
 
+  // ✅ apply text + date filter
   const filtered = customers.filter((customer) => {
     const q = query.trim().toLowerCase();
-    if (!q && !startDate && !endDate) return true;
-    const matchQuery =
-      String(customer.Customer_Name || "").toLowerCase().includes(q) ||
-      String(customer.Customer_Email || "").toLowerCase().includes(q) ||
-      String(customer.Customer_phone || "").toLowerCase().includes(q) ||
-      String(customer.service_name || "").toLowerCase().includes(q);
-    const customerDate = new Date(customer.created_at);
-    const matchDate =
-      (!startDate || customerDate >= new Date(startDate)) &&
-      (!endDate || customerDate <= new Date(endDate));
-    return matchQuery && matchDate;
+    const customerDate = new Date(customer.Customer_Date);
+    const matchesText =
+      !q ||
+      String(customer.Customer_Name || '')
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.Customer_Email || '')
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.Customer_phone || '')
+        .toLowerCase()
+        .includes(q) ||
+      String(customer.service_name || '')
+        .toLowerCase()
+        .includes(q);
+
+    const matchesDate = (!startDate || customerDate >= new Date(startDate)) && (!endDate || customerDate <= new Date(endDate + 'T23:59:59'));
+
+    return matchesText && matchesDate;
   });
 
   const totalPages = Math.ceil(filtered.length / customersPerPage);
@@ -140,7 +130,11 @@ const CustomerDashboard = () => {
   };
 
   const handleRefresh = () => {
-    const storedid = localStorage.getItem("StoreID");
+    const storedid = localStorage.getItem('StoreID');
+    setQuery('');
+    setStartDate('');
+    setEndDate('');
+    setCurrentPage(1);
     if (storedid) {
       fetchCustomers(storedid);
       fetchTotalSales(storedid);
@@ -148,219 +142,209 @@ const CustomerDashboard = () => {
   };
 
   const handleAddCustomer = () => {
-    router.push("/store/add-customer");
+    router.push('/store/add-customer');
   };
 
-  const handleDownloadExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(filtered);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
-    XLSX.writeFile(workbook, "customers.xlsx");
-  };
-
+  // ✅ download PDF
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
-    doc.text(`${storeName} - Customer Report`, 14, 16);
-    doc.autoTable({
-      startY: 20,
-      head: [["ID", "Name", "Email", "Phone", "Service"]],
-      body: filtered.map((c) => [
-        c.CustomerID,
-        c.Customer_Name,
-        c.Customer_Email,
-        c.Customer_phone,
-        c.service_name,
-      ]),
+    doc.text(`Customers of ${storeName || 'Store'}`, 14, 10);
+    const tableColumn = ['ID', 'Name', 'Email', 'Phone', 'Service', 'Date'];
+    const tableRows = [];
+    filtered.forEach((c) => {
+      tableRows.push([c.CustomerID, c.Customer_Name, c.Customer_Email, c.Customer_phone, c.service_name, new Date(c.Customer_Date).toLocaleString()]);
     });
-    doc.save("customers.pdf");
+    autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
+    doc.save('customers.pdf');
   };
 
-  const cardClasses =
-    "bg-white rounded-xl shadow-md p-6 flex flex-col items-start transition-transform transform hover:scale-105";
-  const metricClasses = "text-4xl font-bold text-gray-900 mt-2";
-  const labelClasses = "text-gray-500 font-medium";
+  // ✅ download Excel
+  const handleDownloadExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      filtered.map((c) => ({
+        ID: c.CustomerID,
+        Name: c.Customer_Name,
+        Email: c.Customer_Email,
+        Phone: c.Customer_phone,
+        Service: c.service_name,
+        Date: new Date(c.Customer_Date).toLocaleString(),
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Customers');
+    XLSX.writeFile(workbook, 'customers.xlsx');
+  };
+
+  const cardClasses = 'bg-white rounded-xl shadow-md p-6 flex flex-col items-start transition-transform transform hover:scale-105';
+  const metricClasses = 'text-4xl font-bold text-gray-900 mt-2';
+  const labelClasses = 'text-gray-500 font-medium';
 
   return (
     <ProtectedStoreRoute>
-      <div className="min-h-screen bg-white p-4 md:p-8">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors mb-6"
-        >
+      <div className='min-h-screen bg-white p-4 md:p-8'>
+        <button onClick={() => router.back()} className='flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors mb-6'>
           <FaArrowLeft />
           Back to Store Dashboard
         </button>
 
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              {storeName || "Store"} Dashboard
-            </h1>
-            <p className="text-gray-500 mt-2 text-lg">
-              A comprehensive overview of your customer data.
-            </p>
+        <div className='max-w-7xl mx-auto'>
+          {/* Header */}
+          <div className='mb-8'>
+            <h1 className='text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'>{storeName || 'Store'} Dashboard</h1>
+            <p className='text-gray-500 mt-2 text-lg'>A comprehensive overview of your customer data.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Overview cards */}
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
             <div className={cardClasses}>
-              <div className="flex items-center justify-between w-full">
-                <FaUsers size={28} className="text-indigo-500" />
+              <div className='flex items-center justify-between w-full'>
+                <FaUsers size={28} className='text-indigo-500' />
                 <p className={labelClasses}>Total Customers</p>
               </div>
               <h2 className={metricClasses}>{customers.length}</h2>
             </div>
             <div className={cardClasses}>
-              <div className="flex items-center justify-between w-full">
-                <FaMoneyBillWave size={28} className="text-green-500" />
+              <div className='flex items-center justify-between w-full'>
+                <FaMoneyBillWave size={28} className='text-green-500' />
                 <p className={labelClasses}>Total Sales</p>
               </div>
               <h2 className={metricClasses}>
-                {totalSales.toLocaleString("en-IN", {
-                  style: "currency",
-                  currency: "INR",
+                {totalSales.toLocaleString('en-IN', {
+                  style: 'currency',
+                  currency: 'INR',
                 })}
               </h2>
             </div>
             <div className={cardClasses}>
-              <div className="flex items-center justify-between w-full">
-                <FaPercentage size={28} className="text-yellow-500" />
+              <div className='flex items-center justify-between w-full'>
+                <FaPercentage size={28} className='text-yellow-500' />
                 <p className={labelClasses}>Commission Rate</p>
               </div>
               <h2 className={metricClasses}>{totalCommission}</h2>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h3 className="text-2xl font-semibold text-gray-800 flex items-center mb-4">
-              <FaChartBar className="mr-3 text-purple-600" /> Customer Growth
-              Over Time
+          {/* Chart */}
+          <div className='bg-white rounded-xl shadow-md p-6 mb-8'>
+            <h3 className='text-2xl font-semibold text-gray-800 flex items-center mb-4'>
+              <FaChartBar className='mr-3 text-purple-600' /> Customer Growth Over Time
             </h3>
-            <p className="text-gray-500 mb-6">
-              Visualizing new customer sign-ups by month.
-            </p>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={customerGrowthData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+            <ResponsiveContainer width='100%' height={300}>
+              <BarChart data={customerGrowthData}>
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis dataKey='name' />
                 <YAxis />
-                <Tooltip cursor={{ fill: "transparent" }} />
+                <Tooltip cursor={{ fill: 'transparent' }} />
                 <Legend />
-                <Bar
-                  dataKey="New Customers"
-                  fill="#8884d8"
-                  radius={[10, 10, 0, 0]}
-                />
+                <Bar dataKey='New Customers' fill='#8884d8' radius={[10, 10, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-              <div className="relative flex-1">
+          {/* Table */}
+          <div className='bg-white rounded-xl shadow-md p-6'>
+            {/* ✅ date filters + buttons */}
+            <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6'>
+              <div className='relative flex-1'>
                 <input
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  placeholder="Search by name, email, phone, or service..."
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder='Search by name, email, phone, or service...'
+                  className='w-full border border-gray-300 rounded-lg px-3 py-1 pl-9 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
                 />
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm' />
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* 🏷️ Label + Date Filter */}
+              <div className='flex items-center gap-2'>
+                <span className='font-medium text-gray-700'>Date Ways:</span>
                 <input
-                  type="date"
+                  type='date'
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-2 py-2"
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className='border border-gray-300 rounded-lg px-2 py-1 text-sm'
                 />
+                <span className='text-gray-500 text-sm'>to</span>
                 <input
-                  type="date"
+                  type='date'
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-2 py-2"
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className='border border-gray-300 rounded-lg px-2 py-1 text-sm'
                 />
               </div>
-              <div className="flex gap-2">
+
+              {/* 📌 Small Buttons */}
+              <div className='flex gap-2'>
                 <button
                   onClick={handleRefresh}
                   disabled={loading}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
-                >
-                  <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
+                  className='bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 text-sm rounded-lg flex items-center gap-1 disabled:opacity-50'>
+                  <FaSpinner className={`${loading ? 'animate-spin' : ''}`} />
                   Refresh
                 </button>
                 <Link
-                  href="/store/addCustomer"
+                  href='/store/addCustomer'
                   onClick={handleAddCustomer}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
+                  className='bg-green-600 hover:bg-green-700 text-white px-2 py-1 text-sm rounded-lg flex items-center gap-1'>
                   <FaPlus />
-                  Add Customer
+                  Add
                 </Link>
-                <button
-                  onClick={handleDownloadPDF}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
+                <button onClick={handleDownloadPDF} className='bg-red-600 hover:bg-red-700 text-white px-2 py-1 text-sm rounded-lg flex items-center gap-1'>
                   <FaFilePdf />
                   PDF
                 </button>
-                <button
-                  onClick={handleDownloadExcel}
-                  className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
+                <button onClick={handleDownloadExcel} className='bg-green-700 hover:bg-green-800 text-white px-2 py-1 text-sm rounded-lg flex items-center gap-1'>
                   <FaFileExcel />
                   Excel
                 </button>
               </div>
             </div>
 
-            <h3 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
-              <FaUsers className="mr-2" /> Customer List
+            <h3 className='text-xl font-semibold text-gray-800 flex items-center mb-4'>
+              <FaUsers className='mr-2' /> Customer List
             </h3>
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <FaSpinner className="animate-spin text-4xl text-indigo-500" />
+              <div className='flex items-center justify-center py-12'>
+                <FaSpinner className='animate-spin text-4xl text-indigo-500' />
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                <div className='overflow-x-auto'>
+                  <table className='w-full border-collapse'>
                     <thead>
-                      <tr className="text-left text-xs uppercase tracking-wide text-gray-600">
-                        <th className="p-3 bg-gray-50">ID</th>
-                        <th className="p-3 bg-gray-50">Name</th>
-                        <th className="p-3 bg-gray-50">Email</th>
-                        <th className="p-3 bg-gray-50">Phone</th>
-                        <th className="p-3 bg-gray-50">Service</th>
+                      <tr className='text-left text-xs uppercase tracking-wide text-gray-600'>
+                        <th className='p-3 bg-gray-50'>ID</th>
+                        <th className='p-3 bg-gray-50'>Name</th>
+                        <th className='p-3 bg-gray-50'>Email</th>
+                        <th className='p-3 bg-gray-50'>Phone</th>
+                        <th className='p-3 bg-gray-50'>Service</th>
                       </tr>
                     </thead>
                     <tbody>
                       {currentCustomers.length > 0 ? (
                         currentCustomers.map((customer) => (
-                          <tr
-                            key={customer.CustomerID}
-                            className="hover:bg-gray-50 text-sm border-t"
-                          >
-                            <td className="p-3">{customer.CustomerID}</td>
-                            <td className="p-3">{customer.Customer_Name}</td>
-                            <td className="p-3">{customer.Customer_Email}</td>
-                            <td className="p-3">{customer.Customer_phone}</td>
-                            <td className="p-3">{customer.service_name}</td>
+                          <tr key={customer.CustomerID} className='hover:bg-gray-50 text-sm border-t'>
+                            <td className='p-3'>{customer.CustomerID}</td>
+                            <td className='p-3'>{customer.Customer_Name}</td>
+                            <td className='p-3'>{customer.Customer_Email}</td>
+                            <td className='p-3'>{customer.Customer_phone}</td>
+                            <td className='p-3'>{customer.service_name}</td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td
-                            colSpan={5}
-                            className="p-8 text-center text-gray-500 border-t"
-                          >
-                            <div className="flex flex-col items-center gap-2">
-                              <FaUsers className="text-4xl text-gray-300" />
+                          <td colSpan={5} className='p-8 text-center text-gray-500 border-t'>
+                            <div className='flex flex-col items-center gap-2'>
+                              <FaUsers className='text-4xl text-gray-300' />
                               <p>No customers found</p>
                             </div>
                           </td>
@@ -371,32 +355,25 @@ const CustomerDashboard = () => {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-6 flex-wrap">
+                  <div className='flex justify-center items-center gap-2 mt-6 flex-wrap'>
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-100"
-                    >
+                      className='px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-100'>
                       Previous
                     </button>
                     {[...Array(totalPages)].map((_, index) => (
                       <button
                         key={index}
                         onClick={() => handlePageChange(index + 1)}
-                        className={`px-3 py-1 border rounded-lg ${
-                          currentPage === index + 1
-                            ? "bg-indigo-600 text-white"
-                            : "hover:bg-gray-100"
-                        }`}
-                      >
+                        className={`px-3 py-1 border rounded-lg ${currentPage === index + 1 ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100'}`}>
                         {index + 1}
                       </button>
                     ))}
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-100"
-                    >
+                      className='px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-100'>
                       Next
                     </button>
                   </div>
