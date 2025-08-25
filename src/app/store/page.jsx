@@ -11,6 +11,8 @@ import {
   FaChartBar,
   FaMoneyBillWave,
   FaPercentage,
+  FaFilePdf,
+  FaFileExcel,
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -25,6 +27,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import Link from "next/link";
 
 const customerGrowthData = [
@@ -40,16 +45,15 @@ const customerGrowthData = [
 
 const CustomerDashboard = () => {
   const router = useRouter();
-
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState([]);
   const [storeName, setStoreName] = useState("");
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 5;
-
-  // New state for dynamic sales data
-  const [totalSales, setTotalSales] = useState(0); 
+  const [totalSales, setTotalSales] = useState(0);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const totalCommission = "10%";
 
@@ -59,14 +63,12 @@ const CustomerDashboard = () => {
       setLoading(false);
       return;
     }
-
     try {
       setLoading(true);
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_STORE_URL}/GetCustomersByStoreId`,
         { params: { Id: id } }
       );
-
       if (res.data && res.data.length > 0) {
         setCustomers(res.data);
         setStoreName(res.data[0].StoreName);
@@ -83,7 +85,6 @@ const CustomerDashboard = () => {
     }
   };
 
-  // New function to fetch total sales for the store
   const fetchTotalSales = async (id) => {
     if (!id) return;
     try {
@@ -91,7 +92,6 @@ const CustomerDashboard = () => {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/BalancebyStoreid?StoreID=${id}`
       );
-      // Access the TotalBalance from the first item in the array
       const sales = response.data?.[0]?.TotalBalance || 0;
       setTotalSales(sales);
     } catch (error) {
@@ -106,7 +106,7 @@ const CustomerDashboard = () => {
     const storedid = localStorage.getItem("StoreID");
     if (storedid) {
       fetchCustomers(storedid);
-      fetchTotalSales(storedid); // Call the new fetch function
+      fetchTotalSales(storedid);
     } else {
       setLoading(false);
       toast.error("Store ID not found. Please log in.");
@@ -115,14 +115,17 @@ const CustomerDashboard = () => {
 
   const filtered = customers.filter((customer) => {
     const q = query.trim().toLowerCase();
-    if (!q) return true;
-
-    return (
+    if (!q && !startDate && !endDate) return true;
+    const matchQuery =
       String(customer.Customer_Name || "").toLowerCase().includes(q) ||
       String(customer.Customer_Email || "").toLowerCase().includes(q) ||
       String(customer.Customer_phone || "").toLowerCase().includes(q) ||
-      String(customer.service_name || "").toLowerCase().includes(q)
-    );
+      String(customer.service_name || "").toLowerCase().includes(q);
+    const customerDate = new Date(customer.created_at);
+    const matchDate =
+      (!startDate || customerDate >= new Date(startDate)) &&
+      (!endDate || customerDate <= new Date(endDate));
+    return matchQuery && matchDate;
   });
 
   const totalPages = Math.ceil(filtered.length / customersPerPage);
@@ -140,7 +143,7 @@ const CustomerDashboard = () => {
     const storedid = localStorage.getItem("StoreID");
     if (storedid) {
       fetchCustomers(storedid);
-      fetchTotalSales(storedid); // Include the new function in refresh
+      fetchTotalSales(storedid);
     }
   };
 
@@ -148,7 +151,32 @@ const CustomerDashboard = () => {
     router.push("/store/add-customer");
   };
 
-  const cardClasses = "bg-white rounded-xl shadow-md p-6 flex flex-col items-start transition-transform transform hover:scale-105";
+  const handleDownloadExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filtered);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
+    XLSX.writeFile(workbook, "customers.xlsx");
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.text(`${storeName} - Customer Report`, 14, 16);
+    doc.autoTable({
+      startY: 20,
+      head: [["ID", "Name", "Email", "Phone", "Service"]],
+      body: filtered.map((c) => [
+        c.CustomerID,
+        c.Customer_Name,
+        c.Customer_Email,
+        c.Customer_phone,
+        c.service_name,
+      ]),
+    });
+    doc.save("customers.pdf");
+  };
+
+  const cardClasses =
+    "bg-white rounded-xl shadow-md p-6 flex flex-col items-start transition-transform transform hover:scale-105";
   const metricClasses = "text-4xl font-bold text-gray-900 mt-2";
   const labelClasses = "text-gray-500 font-medium";
 
@@ -164,7 +192,6 @@ const CustomerDashboard = () => {
         </button>
 
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               {storeName || "Store"} Dashboard
@@ -174,9 +201,7 @@ const CustomerDashboard = () => {
             </p>
           </div>
 
-          {/* Dashboard Overview: Status Cards & Chart */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {/* Total Customers Card */}
             <div className={cardClasses}>
               <div className="flex items-center justify-between w-full">
                 <FaUsers size={28} className="text-indigo-500" />
@@ -184,19 +209,18 @@ const CustomerDashboard = () => {
               </div>
               <h2 className={metricClasses}>{customers.length}</h2>
             </div>
-
-            {/* Total Sales Card */}
             <div className={cardClasses}>
               <div className="flex items-center justify-between w-full">
                 <FaMoneyBillWave size={28} className="text-green-500" />
                 <p className={labelClasses}>Total Sales</p>
               </div>
               <h2 className={metricClasses}>
-                {totalSales.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                {totalSales.toLocaleString("en-IN", {
+                  style: "currency",
+                  currency: "INR",
+                })}
               </h2>
             </div>
-
-            {/* Commission Card */}
             <div className={cardClasses}>
               <div className="flex items-center justify-between w-full">
                 <FaPercentage size={28} className="text-yellow-500" />
@@ -206,7 +230,6 @@ const CustomerDashboard = () => {
             </div>
           </div>
 
-          {/* Customer Growth Chart */}
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
             <h3 className="text-2xl font-semibold text-gray-800 flex items-center mb-4">
               <FaChartBar className="mr-3 text-purple-600" /> Customer Growth
@@ -218,24 +241,22 @@ const CustomerDashboard = () => {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={customerGrowthData}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip cursor={{ fill: "transparent" }} />
                 <Legend />
-                <Bar dataKey="New Customers" fill="#8884d8" radius={[10, 10, 0, 0]} />
+                <Bar
+                  dataKey="New Customers"
+                  fill="#8884d8"
+                  radius={[10, 10, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Main Content: Search & Table */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
               <div className="relative flex-1">
@@ -250,6 +271,20 @@ const CustomerDashboard = () => {
                 />
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-2 py-2"
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-2 py-2"
+                />
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleRefresh}
@@ -259,18 +294,31 @@ const CustomerDashboard = () => {
                   <FaSpinner className={`${loading ? "animate-spin" : ""}`} />
                   Refresh
                 </button>
-                 <Link
-              href="/store/addCustomer"
+                <Link
+                  href="/store/addCustomer"
                   onClick={handleAddCustomer}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <FaPlus />
                   Add Customer
                 </Link>
+                <button
+                  onClick={handleDownloadPDF}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                >
+                  <FaFilePdf />
+                  PDF
+                </button>
+                <button
+                  onClick={handleDownloadExcel}
+                  className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                >
+                  <FaFileExcel />
+                  Excel
+                </button>
               </div>
             </div>
 
-            {/* Table */}
             <h3 className="text-xl font-semibold text-gray-800 flex items-center mb-4">
               <FaUsers className="mr-2" /> Customer List
             </h3>
