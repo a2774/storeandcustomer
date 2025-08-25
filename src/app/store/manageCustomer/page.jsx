@@ -159,63 +159,76 @@ const CustomersByStore = () => {
             </h1>
             <p className='text-gray-600 mt-2 text-lg'>Manage and view all registered customers of this store</p>
           </div>
-          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6'>
-            <div className='flex flex-col sm:flex-row gap-3 w-full lg:w-auto'>
-              <div className='relative flex-1'>
-                <input
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  placeholder='Search by name, email, phone, or service...'
-                  className='w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
-                />
-                <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-              </div>
-              <div className='flex gap-2 items-center'>
-                <input
-                  type='date'
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className='border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
-                />
-                <span className='text-gray-500'>to</span>
-                <input
-                  type='date'
-                  value={endDate}
-                  onChange={(e) => {
-                    setEndDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className='border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
-                />
-              </div>
-              <div className='flex gap-2'>
-                <button
-                  onClick={handleRefresh}
-                  disabled={loading}
-                  className='bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm'>
-                  <FaSpinner className={`${loading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </button>
-                <button onClick={handleAddCustomer} className='bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm'>
-                  Add
-                </button>
-                <button onClick={handleDownloadPDF} className='bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm'>
-                  <FaFilePdf className='text-base' />
-                  PDF
-                </button>
-                <button onClick={handleDownloadExcel} className='bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm'>
-                  <FaFileExcel className='text-base' />
-                  Excel
-                </button>
-              </div>
-            </div>
-          </div>
+       <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-6'>
+  <div className='flex flex-col sm:flex-row gap-3 w-full lg:w-auto'>
+    <div className='relative flex-1'>
+      <input
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setCurrentPage(1);
+        }}
+        placeholder='Search by name, email, phone, or service...'
+        className='w-full border border-gray-300 rounded-lg px-3 py-1.5 pl-9 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+      />
+      <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm' />
+    </div>
+
+    <div className='flex gap-2 items-center'>
+       <span className='font-medium text-gray-700'>Date Ways:</span>
+      <input
+        type='date'
+        value={startDate}
+        onChange={(e) => {
+          setStartDate(e.target.value);
+          setCurrentPage(1);
+        }}
+        className='border border-gray-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+      />
+      <span className='text-gray-500 text-sm'>to</span>
+      <input
+        type='date'
+        value={endDate}
+        onChange={(e) => {
+          setEndDate(e.target.value);
+          setCurrentPage(1);
+        }}
+        className='border border-gray-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+      />
+    </div>
+
+    <div className='flex gap-2'>
+      <button
+        onClick={handleRefresh}
+        disabled={loading}
+        className='bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md flex items-center gap-1.5 text-xs'>
+        <FaSpinner className={`${loading ? 'animate-spin' : ''}`} />
+        Refresh
+      </button>
+
+      <button
+        onClick={handleAddCustomer}
+        className='bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-md flex items-center gap-1.5 text-xs'>
+        Add
+      </button>
+
+      <button
+        onClick={handleDownloadPDF}
+        className='bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded-md flex items-center gap-1.5 text-xs'>
+        <FaFilePdf className='text-sm' />
+        PDF
+      </button>
+
+      <button
+        onClick={handleDownloadExcel}
+        className='bg-green-700 hover:bg-green-800 text-white px-2.5 py-1 rounded-md flex items-center gap-1.5 text-xs'>
+        <FaFileExcel className='text-sm' />
+        Excel
+      </button>
+    </div>
+  </div>
+</div>
+
           <div className='bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden'>
             <div className='bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4'>
               <h2 className='text-xl font-semibold text-white flex items-center'>
@@ -325,3 +338,4 @@ const CustomersByStore = () => {
 
 export default CustomersByStore;
 
+//make
