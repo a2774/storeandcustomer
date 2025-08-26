@@ -193,72 +193,54 @@ export default function CustomerForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validateForm()) {
-    toast.error('Please fix validation errors before submitting.');
-    return;
-  }
+    if (!validateForm()) {
+      toast.error('Please fix validation errors before submitting.');
+      return;
+    }
+    
+    // Add a check to prevent submission while uploading
+    if (uploadingPan || uploadingAadhar) {
+      toast.warn('Please wait for files to finish uploading.');
+      return;
+    }
 
-  if (uploadingPan || uploadingAadhar) {
-    toast.warn('Please wait for files to finish uploading.');
-    return;
-  }
+    const currentLogin = JSON.parse(localStorage.getItem('CurrentLogin'));
+    if (!currentLogin) {
+      toast.error('No current login found!');
+      return;
+    }
+    const { EmployeeID, StoreID } = currentLogin;
 
-  const currentLogin = JSON.parse(localStorage.getItem('CurrentLogin'));
-  if (!currentLogin) {
-    toast.error('No current login found!');
-    return;
-  }
-  const { EmployeeID, StoreID } = currentLogin;
+    const payload = {
+      ...formData,
+      customer_aadhar: aadharFile,
+      customer_pancard: panFile,
+      StoreID,
+    };
 
-  const payload = {
-    ...formData,
-    customer_aadhar: aadharFile,
-    customer_pancard: panFile,
-    StoreID,
-  };
+    try {
+      const response = await fetch(`${BACKEND_BASE_URL}/CreateCustomer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to submit form');
+      await response.json();
 
-  try {
-    const response = await fetch(`${BACKEND_BASE_URL}/CreateCustomer`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    const result = await response.json();
-
-    if (result.status === 1) {
-      // ✅ success
-      toast.success(result.message);
+      toast.success('Customer added successfully!');
       const key = `customerData_${EmployeeID}_${StoreID}`;
       const prevCustomers = JSON.parse(localStorage.getItem(key)) || [];
       prevCustomers.push({ ...payload, time: new Date().toISOString() });
       localStorage.setItem(key, JSON.stringify(prevCustomers));
       navigate.push('/store/manageCustomer');
-    } else {
-      // ❌ duplicate error -> show under input field
-      const duplicateMsg = result.message || "Duplicate value";
-
-      if (duplicateMsg.includes("Email")) {
-        setErrors(prev => ({ ...prev, customer_email: duplicateMsg }));
-      } else if (duplicateMsg.includes("Phone")) {
-        setErrors(prev => ({ ...prev, customer_phone: duplicateMsg }));
-      } else if (duplicateMsg.includes("Aadhar")) {
-        setErrors(prev => ({ ...prev, Customer_AadharNumber: duplicateMsg }));
-      } else if (duplicateMsg.includes("PAN")) {
-        setErrors(prev => ({ ...prev, Customer_PanNumber: duplicateMsg }));
-      } else {
-        toast.error(duplicateMsg); // fallback
-      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('Failed to add customer. Try again.');
     }
-  } catch (error) {
-    console.error('Error submitting form:', error);
-    toast.error('Failed to add customer. Try again.');
-  }
-};
-
+  };
 
   const isUploading = uploadingPan || uploadingAadhar;
   const isFormInvalid = Object.values(errors).some(error => error);
