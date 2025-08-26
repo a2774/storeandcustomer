@@ -199,7 +199,7 @@ const CustomersByStore = () => {
 
     <div className='flex gap-2'>
       <button
-        onClick={handleRefresh}
+        onClick={handleRefresh} 
         disabled={loading}
         className='bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md flex items-center gap-1.5 text-xs'>
         <FaSpinner className={`${loading ? 'animate-spin' : ''}`} />
